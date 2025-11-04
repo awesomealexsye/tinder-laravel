@@ -14,7 +14,7 @@ namespace App\Http\Controllers;
  *
 * @OA\Server(
  *     url="https://paylaptodo.shop",
- *     description="Production/Ngrok Server",
+ *     description="Production Server",
  *     @OA\ServerVariable(
  *         serverVariable="host",
  *         default="http://localhost:8000"
