@@ -12,6 +12,10 @@
         {
             "url": "http://localhost:8000",
             "description": "Local Development Server"
+        },
+        {
+            "url": "https://57e9495b8c55.ngrok-free.app",
+            "description": "Ngrok Public Server"
         }
     ],
     "paths": {
@@ -76,6 +80,18 @@
                                     "location": {
                                         "type": "string",
                                         "example": "San Francisco, USA"
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude coordinate (-90 to 90)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 37.7749
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude coordinate (-180 to 180)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -122.4194
                                     }
                                 },
                                 "type": "object"

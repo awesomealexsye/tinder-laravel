@@ -12,6 +12,14 @@ namespace App\Http\Controllers;
  *     )
  * )
  *
+* @OA\Server(
+ *     url="https://{host}",
+ *     description="Production/Ngrok Server",
+ *     @OA\ServerVariable(
+ *         serverVariable="host",
+ *         default="your-ngrok-url.ngrok-free.app"
+ *     )
+ * )
  * @OA\Server(
  *     url="http://localhost:8000",
  *     description="Local Development Server"

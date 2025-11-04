@@ -34,7 +34,9 @@ class AuthController extends Controller
      *             @OA\Property(property="age", type="integer", example=28),
      *             @OA\Property(property="gender", type="string", enum={"male","female","other"}, example="male"),
      *             @OA\Property(property="bio", type="string", example="Love hiking and coffee"),
-     *             @OA\Property(property="location", type="string", example="San Francisco, USA")
+     *             @OA\Property(property="location", type="string", example="San Francisco, USA"),
+     *             @OA\Property(property="latitude", type="number", format="float", example=37.7749, description="Latitude coordinate (-90 to 90)"),
+     *             @OA\Property(property="longitude", type="number", format="float", example=-122.4194, description="Longitude coordinate (-180 to 180)")
      *         )
      *     ),
      *     @OA\Response(

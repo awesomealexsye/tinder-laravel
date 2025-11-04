@@ -30,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Events\UserReached50LikesEvent::class,
             [\App\Listeners\SendAdminNotificationListener::class, 'handle']
         );
+
+        // Force HTTPS when behind ngrok proxy
+        if (app()->environment('local') && request()->header('x-forwarded-proto') === 'https') {
+            \URL::forceScheme('https');
+        }
     }
 }
