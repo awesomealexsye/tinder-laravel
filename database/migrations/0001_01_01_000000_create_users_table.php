@@ -17,8 +17,19 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->unsignedInteger('age');
+            $table->enum('gender', ['male', 'female', 'other'])->default('other');
+            $table->text('bio')->nullable();
+            $table->string('location')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
+
+            // Indexes
+            $table->index('is_active');
+            $table->index(['latitude', 'longitude']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

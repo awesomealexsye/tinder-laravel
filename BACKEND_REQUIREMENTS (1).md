@@ -38,23 +38,30 @@ Implement using **industry-standard design patterns** and demonstrate:
 ## 🛠️ Technology Stack
 
 ### Required Technologies
-- **Framework**: PHP Laravel 10.x
-- **PHP Version**: 8.1 or higher
-- **Database**: MySQL 8.0 / PostgreSQL 14+
-- **Authentication**: Laravel Sanctum (optional, or simple token-based)
-- **API Documentation**: L5-Swagger / Scramble
+- **Framework**: PHP Laravel **12.x** (Latest)
+- **PHP Version**: **8.3** or higher
+- **Database**: MySQL 8.0+ / PostgreSQL 16+
+- **Authentication**: Laravel Sanctum **4.x** (REQUIRED)
+- **API Documentation**: L5-Swagger 8.6+ / Scramble (Latest)
 - **Task Scheduling**: Laravel Scheduler (Cron Jobs)
 - **Email**: Laravel Mail (Mailtrap for testing / Log driver acceptable)
 
 ### Recommended Packages
 ```json
 {
-  "laravel/framework": "^10.0",
-  "laravel/sanctum": "^3.0",
-  "darkaonline/l5-swagger": "^8.5",
+  "laravel/framework": "^12.0",
+  "laravel/sanctum": "^4.0",
+  "darkaonline/l5-swagger": "^8.6",
   "fakerphp/faker": "^1.23"
 }
 ```
+
+### Laravel 12 New Features to Utilize
+- **Improved type safety** with PHP 8.3
+- **Enhanced validation rules**
+- **Better testing utilities**
+- **Performance improvements**
+- **Modern syntax support**
 
 ---
 
@@ -110,6 +117,7 @@ Contains business logic and orchestrates operations across multiple repositories
 ```
 app/
 ├── Services/
+│   ├── AuthService.php          ← NEW: Handle registration, login, token management
 │   ├── UserService.php
 │   ├── MatchingService.php
 │   ├── LikeService.php
@@ -377,24 +385,30 @@ tinder-api/
 │   ├── DTOs/
 │   │   ├── UserDTO.php
 │   │   ├── RecommendedUserDTO.php
+│   │   ├── AuthDTO.php                        ← NEW
 │   │   └── PaginationDTO.php
 │   ├── Events/
 │   │   ├── UserLikedEvent.php
+│   │   ├── UserRegisteredEvent.php            ← NEW
 │   │   └── UserReached50LikesEvent.php
 │   ├── Exceptions/
 │   │   ├── UserNotFoundException.php
+│   │   ├── InvalidCredentialsException.php    ← NEW
 │   │   └── AlreadyLikedException.php
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php
+│   │   │   ├── AuthController.php             ← NEW
 │   │   │   └── PeopleController.php
 │   │   ├── Requests/
-│   │   │   ├── LoginRequest.php
+│   │   │   ├── RegisterRequest.php            ← NEW
+│   │   │   ├── LoginRequest.php               ← NEW
 │   │   │   └── RecommendedPeopleRequest.php
 │   │   ├── Resources/
 │   │   │   ├── UserResource.php
+│   │   │   ├── AuthUserResource.php           ← NEW
 │   │   │   └── RecommendedUserResource.php
 │   │   └── Middleware/
+│   │       └── Authenticate.php               ← Sanctum middleware
 │   ├── Listeners/
 │   │   └── SendAdminNotificationListener.php
 │   ├── Mail/
@@ -416,7 +430,7 @@ tinder-api/
 │   │   ├── DislikeRepository.php
 │   │   └── PhotoRepository.php
 │   ├── Services/
-│   │   ├── AuthService.php
+│   │   ├── AuthService.php                    ← NEW
 │   │   ├── UserService.php
 │   │   ├── LikeService.php
 │   │   ├── DislikeService.php
@@ -438,7 +452,8 @@ tinder-api/
 │   │   ├── 2024_01_02_create_photos_table.php
 │   │   ├── 2024_01_03_create_likes_table.php
 │   │   ├── 2024_01_04_create_dislikes_table.php
-│   │   └── 2024_01_05_create_admin_notifications_table.php
+│   │   ├── 2024_01_05_create_admin_notifications_table.php
+│   │   └── 2024_01_06_create_personal_access_tokens_table.php  ← NEW (Sanctum)
 │   └── seeders/
 │       ├── DatabaseSeeder.php
 │       └── UserSeeder.php
@@ -446,12 +461,13 @@ tinder-api/
 │   └── api.php
 └── tests/
     ├── Feature/
-    │   ├── AuthTest.php
+    │   ├── AuthTest.php                       ← NEW
     │   ├── RecommendedPeopleTest.php
     │   ├── LikeTest.php
     │   └── DislikeTest.php
     └── Unit/
         ├── Services/
+        │   ├── AuthServiceTest.php            ← NEW
         │   ├── LikeServiceTest.php
         │   └── UserServiceTest.php
         └── Repositories/
@@ -611,12 +627,172 @@ users (1) ─────< (N) photos
 https://your-domain.com/api
 ```
 
-### Authentication (Optional but Recommended)
+### Authentication (REQUIRED)
+
+**All API endpoints must be protected with Laravel Sanctum token authentication.**
+
 ```
 POST   /api/auth/register     - Register new user
-POST   /api/auth/login        - Login (returns token)
-POST   /api/auth/logout       - Logout
-GET    /api/auth/me           - Get authenticated user
+POST   /api/auth/login        - Login (returns bearer token)
+POST   /api/auth/logout       - Logout (revoke token)
+GET    /api/auth/me           - Get authenticated user profile
+```
+
+#### Authentication Flow:
+1. User registers or logs in → receives API token
+2. Mobile app stores token securely
+3. All subsequent requests include: `Authorization: Bearer {token}`
+4. Token validates user identity for protected endpoints
+
+#### Implementation Requirements:
+- Use **Laravel Sanctum 4.x** for token-based authentication
+- Tokens should be personal access tokens
+- Implement token expiration (optional but recommended)
+- Protect all endpoints except `/auth/register` and `/auth/login`
+
+---
+
+### Authentication API Specifications
+
+#### 1. **POST /api/auth/register**
+
+**Description**: Register a new user account.
+
+**Request Body**:
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePassword123!",
+  "password_confirmation": "SecurePassword123!",
+  "age": 28,
+  "gender": "male",
+  "location": "Seoul, South Korea",
+  "bio": "Love hiking and coffee"
+}
+```
+
+**Validation Rules**:
+- `name`: required, string, max:255
+- `email`: required, email, unique:users
+- `password`: required, string, min:8, confirmed
+- `age`: required, integer, between:18,100
+- `gender`: required, in:male,female,other
+- `location`: nullable, string, max:255
+- `bio`: nullable, string, max:500
+
+**Success Response (201 Created)**:
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "age": 28,
+      "gender": "male",
+      "location": "Seoul, South Korea",
+      "bio": "Love hiking and coffee"
+    },
+    "token": "1|AbCdEfGhIjKlMnOpQrStUvWxYz1234567890"
+  }
+}
+```
+
+---
+
+#### 2. **POST /api/auth/login**
+
+**Description**: Authenticate user and receive access token.
+
+**Request Body**:
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+**Validation Rules**:
+- `email`: required, email
+- `password`: required, string
+
+**Success Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "age": 28,
+      "gender": "male"
+    },
+    "token": "2|XyZ9876543210aBcDeFgHiJkLmNoPqRsTu"
+  }
+}
+```
+
+**Error Response (401 Unauthorized)**:
+```json
+{
+  "success": false,
+  "message": "Invalid credentials"
+}
+```
+
+---
+
+#### 3. **POST /api/auth/logout**
+
+**Description**: Revoke current access token.
+
+**Authentication**: Required (Bearer token)
+
+**Request Body**: None
+
+**Success Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+---
+
+#### 4. **GET /api/auth/me**
+
+**Description**: Get authenticated user profile.
+
+**Authentication**: Required (Bearer token)
+
+**Success Response (200 OK)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 28,
+    "gender": "male",
+    "location": "Seoul, South Korea",
+    "bio": "Love hiking and coffee",
+    "photos": [
+      {
+        "id": 1,
+        "url": "https://storage.example.com/photos/user1_1.jpg",
+        "display_order": 1,
+        "is_primary": true
+      }
+    ]
+  }
+}
 ```
 
 ---
@@ -1029,11 +1205,21 @@ Create database seeders with:
 - Admin email for testing cron notifications
 
 ### 4. **Testing Credentials**
-Provide test credentials:
+Provide test credentials for easy testing:
 ```
 Email: test@example.com
 Password: password123
+
+OR create a seeder that generates:
+- 1 admin user
+- 100 regular users with random data
 ```
+
+### 5. **Postman Collection (Optional but Recommended)**
+Export Postman collection with all API endpoints pre-configured:
+- Authentication endpoints with sample credentials
+- Protected endpoints with example Bearer token
+- All request bodies populated with sample data
 
 ---
 
@@ -1199,22 +1385,61 @@ User::withCount('likesReceived')
 
 ---
 
-## 🔒 Security Considerations
+## 🔒 Security Considerations (Laravel 12)
 
-1. **Authentication**: Use Laravel Sanctum for API token authentication
+1. **Authentication**: Use **Laravel Sanctum 4.x** for API token authentication (REQUIRED)
 2. **Rate Limiting**: Apply rate limits to prevent abuse
-3. **Input Validation**: Validate all incoming requests
+   ```php
+   // routes/api.php
+   Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+       // Protected routes
+   });
+   ```
+3. **Input Validation**: Validate all incoming requests using Form Requests
 4. **SQL Injection**: Use Eloquent ORM / Query Builder (avoid raw queries)
 5. **CORS**: Configure proper CORS headers for mobile app
+   ```php
+   // config/cors.php - Configure for your frontend domain
+   'allowed_origins' => ['*'], // For testing, restrict in production
+   ```
 6. **Environment Variables**: Never commit `.env` file
+7. **Password Hashing**: Use Laravel's `Hash::make()` for passwords
+8. **Token Security**: Store tokens securely on mobile app
+9. **HTTPS Only**: Deploy with SSL certificate (mandatory in production)
+10. **Sanctum Configuration**: 
+    ```php
+    // config/sanctum.php
+    'expiration' => 60 * 24 * 7, // 7 days token expiration
+    'token_prefix' => 'tinder_', // Optional custom prefix
+    ```
 
 ---
 
-## 📞 Support
+## 📞 Support & Resources
 
 For questions or clarifications during implementation:
-- Review Laravel documentation: https://laravel.com/docs
-- Swagger documentation: https://github.com/DarkaOnLine/L5-Swagger
+- **Laravel 12 Documentation**: https://laravel.com/docs/12.x
+- **Laravel Sanctum 4**: https://laravel.com/docs/12.x/sanctum
+- **L5-Swagger Documentation**: https://github.com/DarkaOnLine/L5-Swagger
+- **PHP 8.3 Features**: https://www.php.net/releases/8.3/en.php
+
+### Quick Setup (Laravel 12)
+```bash
+# Create new Laravel 12 project
+composer create-project laravel/laravel tinder-api
+
+# Install Sanctum
+composer require laravel/sanctum
+
+# Publish Sanctum configuration
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+# Install Swagger
+composer require darkaonline/l5-swagger
+
+# Publish Swagger config
+php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider"
+```
 
 ---
 

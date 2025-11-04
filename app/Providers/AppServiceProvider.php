@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Strategies\RandomRecommendationStrategy;
+use App\Strategies\RecommendationStrategyInterface;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind recommendation strategy
+        $this->app->bind(
+            RecommendationStrategyInterface::class,
+            RandomRecommendationStrategy::class
+        );
     }
 
     /**
@@ -19,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register event listeners
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\UserReached50LikesEvent::class,
+            [\App\Listeners\SendAdminNotificationListener::class, 'handle']
+        );
     }
 }
