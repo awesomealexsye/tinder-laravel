@@ -17,7 +17,7 @@ namespace App\Http\Controllers;
  *     description="Production Server",
  *     @OA\ServerVariable(
  *         serverVariable="host",
- *         default="http://localhost:8000"
+ *         default="https://paylaptodo.shop"
  *     )
  * )
  * @OA\Server(
