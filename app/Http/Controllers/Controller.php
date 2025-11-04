@@ -13,11 +13,11 @@ namespace App\Http\Controllers;
  * )
  *
 * @OA\Server(
- *     url="https://{host}",
+ *     url="https://paylaptodo.shop",
  *     description="Production/Ngrok Server",
  *     @OA\ServerVariable(
  *         serverVariable="host",
- *         default="your-ngrok-url.ngrok-free.app"
+ *         default="http://localhost:8000"
  *     )
  * )
  * @OA\Server(
